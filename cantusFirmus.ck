@@ -50,9 +50,19 @@ public class CantusFirmus {
     
     fun int getBasicPitchValue(int pitch){
         while ((pitch-12) >= 0){
+            
             pitch - 12 => pitch;
         }
         return pitch;
+    }
+    
+    fun int getOctaveNumber(int pitch){
+        0 => int octaveNumber;
+        while ((pitch-12) >= 0){
+            octaveNumber++;
+        }
+        return octaveNumber;
+        
     }
     
     fun int getPreviousPitch(){
@@ -118,92 +128,110 @@ public class CantusFirmus {
             }
         }     
     }
+    
+    fun void changeDirection(){
+        if (direction == 1){
+            0 => direction;
+        } else {
+            1 => direction;
+        }
+    }
+    
+    fun int resolveLeap(){
+        int newDegree;
+        0 => hasLeaped;
+        changeDirection();
+        findCurrentDegree() => int currentDegree;
+        if (direction == 1){
+            currentDegree + 1 % 7 => newDegree;
+        } else {
+            if (currentDegree == 0){ 7 => currentDegree;}
+            currentDegree - 1 % 7 => newDegree;
+        }
+        return newDegree;
+    }
+    
+    // calculate next pitch by a step
+    
+    fun int step(int pitch){
         
-        fun void changeDirection(){
-            if (direction == 1){
-                0 => direction;
+        int lowTonic;
+        int newDegree;
+        int octaveNumber;
+        
+        if (hasLeaped){ // case 1: has just leaped
+            resolveLeap() => newDegree;
+            getOctaveNumber(pitch) => octaveNumber;
+            getKey() + (12*octaveNumber) => lowTonic;
+            if (mode == 0){
+                return lowTonic+legalMajSteps[newDegree];
             } else {
-                1 => direction;
+                return lowTonic+legalMinSteps[newDegree];
             }
-        }
-        
-        // calculate next pitch by a step
-        
-        fun int step(int pitch){
+            // case 2: no leap - do either stepwise motion or leap
+            //calculate probability of a leap
+        } else { 
             
-            int newPitch;
-            int newDegree;
-            
-            if (hasLeaped){
-                0 => hasLeaped;
-                changeDirection();
-                findCurrentDegree() => int currentDegree;
-                if (direction == 1){
-                    currentDegree + 1 % 7 => newDegree;
-                } else {
-                    if (currentDegree == 0){ 7 => currentDegree;}
-                    currentDegree - 1 % 7 => newDegree;
-                }
-                if (mode == 0){
-                    return legalMajSteps[newDegree];
-                } else {
-                    return legalMinSteps[newDegree];
-                }
-            } else { //** The tough bit.. **//
-                leapCounter++;
-                return 0;
+            0 => int willLeap;
+            if (willLeap){
+                //do a leap
+            } else {
+                //stepwise motion 
             }
             
-            setNextPitch(newPitch);
-        }
-        
-        
-        //Must refactor these two functions…
-        
-        fun void calNewHighPoint(){
             
-            0 => int found; 
-            int newHigh;
-            
-            while(!found){
-                //highPoint +- a few steps
-                
-                //make sure the result is not a tritone
-                if (Math.abs(newHigh-lowPoint) / 6 != 0){
-                    1 => found;
-                }
-            }
-            newHigh => highPoint;
-        }
-        
-        fun void calNewLowPoint(){
-            
-            0 => int found; 
-            int newLow;
-            
-            while(!found){
-                //lowPoint +- a few steps
-                
-                //make sure the result is not a tritone
-                if (Math.abs(highPoint-newLow) / 6 != 0){
-                    1 => found;
-                }
-            }
-            newLow => lowPoint;
-        }
-        
-        // Move pitches around, calculate next pitch
-        
-        fun void createNextState(){
-            
-            //shuffle next pitches along
-            setPreviousPitch(getCurrentPitch());
-            setCurrentPitch(getNextPitch());
-            
-            //formulate nextPitch
-            step(getCurrentPitch());
+            leapCounter++;
+            return 0;
             
         }
-        
         
     }
+    
+    //Must refactor these two functions…
+    
+    fun void calNewHighPoint(){
+        
+        0 => int found; 
+        int newHigh;
+        
+        while(!found){
+            //highPoint +- a few steps
+            
+            //make sure the result is not a tritone
+            if (Math.abs(newHigh-lowPoint) / 6 != 0){
+                1 => found;
+            }
+        }
+        newHigh => highPoint;
+    }
+    
+    fun void calNewLowPoint(){
+        
+        0 => int found; 
+        int newLow;
+        
+        while(!found){
+            //lowPoint +- a few steps
+            
+            //make sure the result is not a tritone
+            if (Math.abs(highPoint-newLow) / 6 != 0){
+                1 => found;
+            }
+        }
+        newLow => lowPoint;
+    }
+    
+    // Move pitches around, calculate next pitch
+    
+    fun void createNextState(){
+        
+        //shuffle next pitches along
+        setPreviousPitch(getCurrentPitch());
+        setCurrentPitch(getNextPitch());
+        
+        //formulate nextPitch
+        setNextPitch(step(getCurrentPitch()));
+        
+    }
+    
+}
